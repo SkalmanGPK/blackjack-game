@@ -7,7 +7,18 @@ def show_menu():
     print("2. View instructions")
     print("3. Quit")
     choice = input("Enter your choice (1-3):")
-
+    # Define a dictionary to act as a switch-case
+    options = {
+        '1': start_new_game,
+        '2': view_instructions,
+        '3': quit_game
+    }
+    # call the function based on user's choice or print an error if the choice is invalid
+    action = options.get(choice, invalid_choice)
+    action()
+def invalid_choice():
+    print("Invalid choice. Please enter a number between 1 and 3.")
+    show_menu() #Show menu again for new input
 def start_new_game():
     print("\nStarting a new game!")
 
