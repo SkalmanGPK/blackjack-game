@@ -21,8 +21,49 @@ def invalid_choice():
     show_menu() #Show menu again for new input
 def start_new_game():
     print("\nStarting a new game!")
+    deck = create_deck()
+    player_hand = [deck.pop(), deck.pop()] #deals two cards to the player
+    dealer_hand = [deck.pop(), deck.pop()] #deals two cards to the dealer
+    # Display the player's hand
+    print(f"\nYour hand: {player_hand} (value: {calculate_hand_value(player_hand)})")
+    # Display the dealer's hand with one card hidden
+    print(f"Dealer's hand: {dealer_hand[0]}, [hidden]")
+    # Players turn
+    while True:
+        action = input("Do you want to hit or stand (H/S): ").lower()
+        if action == 'h': # user hits
+            player_hand.append(deck.pop())
+            print(f"\nYour hand: {player_hand} (value: {calculate_hand_value(player_hand)})")
+            if calculate_hand_value(player_hand) > 21:
+                print("You bust, Dealer wins.")
+                break
+        elif action == 's': #user stands
+            print("You chose to stand!")
+            break
+        else: # error handling
+            print("Invalid choice. please enter 'h' to hit or 's' to stand.")
+    if calculate_hand_value(player_hand) <= 21:
+        print(f"\nDealer's hand: {dealer_hand} (value: {calculate_hand_value(dealer_hand)})")
+        while calculate_hand_value(dealer_hand) <17:
+            dealer_hand.append(deck.pop())
+            print(f"Dealer draws a card. New hand: {dealer_hand} (value: {calculate_hand_value(dealer_hand)})")
 
-    play_blackjack()
+        # Determine the winner
+        player_total = calculate_hand_value(player_hand)
+        dealer_total = calculate_hand_value(dealer_hand)
+        print("\nFinal Results:")
+        print(f"Your hand: {player_hand} (value: {player_total})")
+        print(f"Dealer's hand: {dealer_hand} (value: {Dealer_total})")
+
+        if dealer_total > 21:
+            print("Dealer busts! You Win.")
+        elif player_total > dealer_total:
+            print("You win!")
+        elif player_total < dealer_total:
+            print("Dealer wins!")
+        else:
+            print("Push, it's a tie!")
+    show_menu()
 def view_instructions():
     #displays the instructions
     print("\nBlackjack instructions:")
@@ -41,3 +82,25 @@ def create_deck():
     deck = [(rank, suit) for suit in suits for rank in ranks]
     random.shuffle(deck)
     return deck
+def calculate_hand_value(hand):
+    #Calculate the value of a hand of cards.
+    value = 0
+    aces = 0
+    for card in hand:
+        rank, suit = card
+        if rank in ['J', 'Q', 'K']:
+            value += 10
+        elif rank == 'A':
+            aces += 1
+            value += 11
+        else:
+            value += int(rank)
+    #adjust for aces
+    while value > 21 and aces:
+        value -=10
+        aces -= 1
+    return value
+
+
+if __name__ == "__main__":
+    show_menu()
