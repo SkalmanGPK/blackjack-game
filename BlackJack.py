@@ -1,5 +1,12 @@
 import random
 import time
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def log_event(event):
+    logging.info(event)
 def show_menu():
     # Displays the menu on startup.
     print("Welcome to Blackjack!")
@@ -15,13 +22,18 @@ def show_menu():
         '3': quit_game
     }
     # Call the function based on user's choice or print an error if the choice is invalid
-    action = options.get(choice, invalid_choice)
-    action()
+    action = options.get(choice)
+    if action:
+        action()
+    else:
+        invalid_choice()
 def invalid_choice():
     print("Invalid choice. Please enter a number between 1 and 3.")
     show_menu() # Show menu again for new input
 def start_new_game():
+    log_event("Starting a new game.")
     print("\nStarting a new game!")
+
     deck = create_deck()
     player_hand = [deck.pop(), deck.pop()] # Deals two cards to the player
     dealer_hand = [deck.pop(), deck.pop()] # Deals two cards to the dealer
@@ -29,22 +41,22 @@ def start_new_game():
     print(f"\nYour hand: {player_hand} (value: {calculate_hand_value(player_hand)})")
     # Display the dealer's hand with one card hidden
     print(f"Dealer's hand: {dealer_hand[0]}, [hidden]")
-    time.sleep(2)# Pause for 2 seconds
+    time.sleep(2) # Pause for 2 seconds
+
     # Players turn
     while True:
-        action = input("Do you want to hit or stand (H/S): ").lower()
-        if action == 'h':# User hits
+        action = get_player_action()
+        if action == 'h': # User hits
             player_hand.append(deck.pop())
             print(f"\nYour hand: {player_hand} (value: {calculate_hand_value(player_hand)})")
             if calculate_hand_value(player_hand) > 21:
                 print("You bust, Dealer wins.")
+                log_event("Player busts. Dealer wins")
                 break
-        elif action == 's':# User stands
+        elif action == 's': # User stands
             print("You chose to stand!")
             break
-        else: # Error handling
-            print("Invalid choice. please enter 'h' to hit or 's' to stand.")
-            time.sleep(3) # Pause for 3 seconds
+    # Dealer's turn if player hans't busted   
     if calculate_hand_value(player_hand) <= 21:
         print(f"\nDealer's hand: {dealer_hand} (value: {calculate_hand_value(dealer_hand)})")
         time.sleep(2) # Pause for 2 seconds
@@ -59,27 +71,42 @@ def start_new_game():
         print("\nFinal Results:")
         print(f"Your hand: {player_hand} (value: {player_total})")
         print(f"Dealer's hand: {dealer_hand} (value: {dealer_total})")
-        time.sleep(2)# pause for 2 seconds
+        time.sleep(2) # pause for 2 seconds
 
         if dealer_total > 21:
             print("Dealer busts! You Win.")
+            log_event("Dealer busts. Player wins")
         elif player_total > dealer_total:
             print("You win!")
+            log_event("player wins.")
         elif player_total < dealer_total:
             print("Dealer wins!")
+            log_event("Dealer wins.")
         else:
             print("Push, it's a tie!")
-        time.sleep(3)# pause for 3 seconds
+            log_event("Push, it's a tie!")
+        time.sleep(3) # pause for 3 seconds
+
     show_menu()
+def get_choice(prompt, valid_choices):
+    while True:
+        choice = input(prompt).strip()
+        if choice in valid_choices:
+            return choice
+        print(f"Invalid choice. Please enter one of {valid_choices}")
+
+def get_player_action():
+    return get_choice("Do you want to hit or stand (H/S): ", ['h', 's'])
+
 def view_instructions():
-    #displays the instructions
+    # Displays the instructions
     print("\nBlackjack instructions:")
     print("1. The goal of the game is to get as close to 21 as possible without exceeding it.")
     print("2. Eeach player is dealt two cards initially.")
     print("3. You can choose to 'hit' (get another card) or stand (keep your current hand).")
     print("4. Numbered cards are worth their face value. Face cards are worth 10. Aces can be 1 or 11.")
     print("5. The dealer must hit until the sum of their cards are of total 17 or higher.")
-    time.sleep(5) # pause for 5 seconds
+    time.sleep(5) # Pause for 5 seconds
     show_menu() # Show the menu again after displaying instructions
 def quit_game():
     print("Thank you for playing! Goodbye!")
@@ -92,6 +119,8 @@ def create_deck():
     return deck
 def calculate_hand_value(hand):
     # Calculate the value of a hand of cards.
+    if not hand:
+        return 0 # Handle the empty hand edge case
     value = 0
     aces = 0
     for card in hand:
@@ -102,12 +131,17 @@ def calculate_hand_value(hand):
             aces += 1
             value += 11
         else:
-            value += int(rank)
+            try:
+                value += int(rank)
+            except ValueError:
+                print(f"Invalid card rank: {rank}")
+                return 0
     # Adjust for aces
     while value > 21 and aces:
-        value -=10
+        value -= 10
         aces -= 1
     return value
+
 def format_hand(hand):
     # Formats a hand for display
     return ', '.join([f"{rank}{suit}" if card != 'Hidden' else '[Hidden]' for card in hand for rank, suit in [card]])
